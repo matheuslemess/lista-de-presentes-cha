@@ -1,103 +1,246 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect, Fragment } from "react";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import confetti from "canvas-confetti";
+import { Gift, Heart, PackageCheck, PartyPopper, X } from "lucide-react";
+import { Dialog, Transition } from "@headlessui/react";
+
+interface Presente {
+  id: string;
+  nome: string;
+  disponivel: boolean;
+}
+
+export default function HomePage() {
+  const [presentes, setPresentes] = useState<Presente[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [presenteSelecionado, setPresenteSelecionado] =
+    useState<Presente | null>(null);
+  const [confirmado, setConfirmado] = useState(false);
+  const [busca, setBusca] = useState("");
+  const presentesFiltrados = presentes.filter((presente) =>
+    presente.nome.toLowerCase().includes(busca.toLowerCase())
+  );
+
+  useEffect(() => {
+    const q = query(
+      collection(db, "presentes"),
+      where("disponivel", "==", true)
+    );
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const presentesData: Presente[] = [];
+      querySnapshot.forEach((doc) => {
+        presentesData.push({ id: doc.id, ...doc.data() } as Presente);
+      });
+      presentesData.sort((a, b) => a.nome.localeCompare(b.nome));
+      setPresentes(presentesData);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleConfirmarPresente = async () => {
+    if (!presenteSelecionado) return;
+    const presenteRef = doc(db, "presentes", presenteSelecionado.id);
+    try {
+      await updateDoc(presenteRef, { disponivel: false });
+      confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+      setConfirmado(true);
+    } catch (error) {
+      console.error("Erro ao atualizar o presente: ", error);
+      alert("Ocorreu um erro ao selecionar o presente. Tente novamente.");
+    }
+  };
+
+  const fecharModal = () => {
+    setPresenteSelecionado(null);
+    setConfirmado(false);
+  };
+
+  const numeroWhatsapp = "5567992559378";
+  const mensagemWhatsapp = `Olá! Acabei de escolher o presente "${presenteSelecionado?.nome}" para o Chá de Panela e gostaria de deixar uma mensagem especial para os noivos...`;
+  const linkWhatsapp = `https://wa.me/${numeroWhatsapp}?text=${encodeURIComponent(
+    mensagemWhatsapp
+  )}`;
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen">
+      <audio
+        src="/154.mp3"
+        autoPlay
+        loop
+        controls
+        style={{ display: "none" }}
+      />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <main className="container mx-auto max-w-4xl p-4 md:p-8">
+        <header className="text-center mb-16 mt-8">
+          <div className="inline-block bg-white/80 backdrop-blur-sm p-6 sm:p-8 rounded-3xl shadow-lg">
+            <h1 className="text-2xl text-gray-500 tracking-widest uppercase">
+              Nosso Chá de Panela
+            </h1>
+            <p className="font-dancing text-5xl sm:text-7xl text-rose-800 my-4">
+              Thainá & Noivo
+            </p>
+            <div className="flex justify-center items-center gap-4 text-rose-400">
+              <div className="flex-1 h-px bg-rose-200"></div>
+              <Heart size={20} />
+              <div className="flex-1 h-px bg-rose-200"></div>
+            </div>
+            <div className="mt-6 text-gray-600 max-w-lg mx-auto text-base">
+              <p>
+                Com o coração cheio de alegria, convidamos você a celebrar
+                conosco! Sua presença é o nosso maior presente, mas se desejar
+                nos agraciar com um mimo para nosso novo lar, preparamos esta
+                lista com muito carinho.
+              </p>
+            </div>
+          </div>
+        </header>
+        {/* Campo de pesquisa */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Pesquisar presente..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="w-full p-3 rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-rose-400 placeholder-gray-400"
+          />
         </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
+            {Array(12)
+              .fill(0)
+              .map((_, index) => (
+                <div
+                  key={index}
+                  className="bg-white/80 rounded-2xl p-4 shadow-sm min-h-[120px] animate-pulse"
+                >
+                  <div className="w-10 h-10 bg-rose-100 rounded-full mx-auto mb-3"></div>
+                  <div className="h-4 bg-rose-100 rounded w-3/4 mx-auto"></div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
+            {presentesFiltrados.map((presente) => (
+              <button
+                key={presente.id}
+                onClick={() => setPresenteSelecionado(presente)}
+                className="bg-white/80 border border-transparent rounded-2xl p-4 text-center shadow-sm md:hover:shadow-lg md:hover:border-rose-300 md:hover:-translate-y-1 transition-all duration-300 flex flex-col items-center justify-center min-h-[120px] group"
+              >
+                <Gift className="h-8 w-8 mb-3 text-rose-400 md:group-hover:scale-110 transition-transform" />
+                <p className="font-medium text-gray-700 text-sm leading-tight">
+                  {presente.nome}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <Transition appear show={presenteSelecionado !== null} as={Fragment}>
+          <Dialog as="div" className="relative z-50" onClose={fecharModal}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black/70" />
+            </Transition.Child>
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-white p-6 sm:p-8 text-left align-middle shadow-xl transition-all">
+                    {!confirmado ? (
+                      <div className="text-center">
+                        <Dialog.Title
+                          as="h3"
+                          className="text-3xl font-bold text-gray-800 mb-4"
+                        >
+                          Confirmar Presente
+                        </Dialog.Title>
+                        <div className="text-lg my-6 p-4 bg-rose-50 text-rose-800 rounded-lg border border-rose-200">
+                          <p>Você selecionou:</p>
+                          <strong className="text-xl">
+                            {presenteSelecionado?.nome}
+                          </strong>
+                        </div>
+                        <a
+                          href={linkWhatsapp}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-rose-600 hover:underline mb-8 block"
+                        >
+                          Quer deixar uma mensagem especial para os noivos?
+                        </a>
+                        <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4">
+                          <button
+                            onClick={fecharModal}
+                            className="w-full justify-center flex items-center gap-2 py-3 px-6 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200"
+                          >
+                            <X size={18} /> Cancelar
+                          </button>
+                          <button
+                            onClick={handleConfirmarPresente}
+                            className="w-full justify-center flex items-center gap-2 py-3 px-6 bg-rose-600 text-white font-bold rounded-lg hover:bg-rose-700 transition-all duration-200 shadow-lg shadow-rose-500/30"
+                          >
+                            <PackageCheck size={18} /> Confirmar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <PartyPopper
+                          size={48}
+                          className="mx-auto text-rose-500 mb-4"
+                        />
+                        <Dialog.Title
+                          as="h3"
+                          className="text-4xl font-bold text-rose-800 mb-3"
+                        >
+                          Muito Obrigado!
+                        </Dialog.Title>
+                        <p className="text-gray-600 text-lg mb-8">
+                          Seu presente foi confirmado com sucesso. Somos
+                          imensamente gratos pelo seu carinho!
+                        </p>
+                        <button
+                          onClick={fecharModal}
+                          className="py-3 px-8 bg-rose-600 text-white font-bold rounded-lg hover:bg-rose-700 transition-transform duration-200 hover:scale-105 shadow-lg shadow-rose-500/30"
+                        >
+                          Fechar
+                        </button>
+                      </div>
+                    )}
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </Dialog>
+        </Transition>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
