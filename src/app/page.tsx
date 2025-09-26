@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, Fragment, useRef } from "react";
 import {
   collection,
   query,
@@ -30,6 +30,21 @@ export default function HomePage() {
   const presentesFiltrados = presentes.filter((presente) =>
     presente.nome.toLowerCase().includes(busca.toLowerCase())
   );
+
+  const [mostrarPaleta, setMostrarPaleta] = useState(false);
+  const paletaRef = useRef<HTMLDivElement>(null);
+  const listaRef = useRef<HTMLDivElement>(null);
+
+  const handleMostrarPaleta = () => {
+    setMostrarPaleta(true);
+    setTimeout(() => {
+      paletaRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100); // espera a renderização
+  };
+
+  const handleVoltarLista = () => {
+    listaRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     const q = query(
@@ -106,6 +121,16 @@ export default function HomePage() {
             </div>
           </div>
         </header>
+        {/* Mensagem como link */}
+        <div  ref={listaRef} className="text-center mb-10">
+          <button
+            onClick={handleMostrarPaleta}
+            className="text-lg text-gray-500 tracking-widest uppercase"
+          >
+            Confira nossa paleta de inspiração (Clique aqui)
+          </button>
+        </div>
+
         {/* Campo de pesquisa */}
         <div className="mb-6">
           <input
@@ -145,6 +170,25 @@ export default function HomePage() {
                 </p>
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Imagem da paleta, aparece depois da lista */}
+        {mostrarPaleta && (
+          <div ref={paletaRef} className="mt-10 flex flex-col items-center">
+            {/* Link para voltar à lista */}
+            <button
+              onClick={handleVoltarLista}
+              className="text-lg text-gray-500 tracking-widest uppercase"
+            >
+              Voltar para a lista de presentes
+            </button>
+
+            <img
+              src="/paleta_page_1.png"
+              alt="Paleta de inspiração"
+              className="rounded-xl shadow-lg w-full max-w-3xl mt-10"
+            />
           </div>
         )}
 
@@ -193,7 +237,8 @@ export default function HomePage() {
                           rel="noopener noreferrer"
                           className="text-sm text-rose-600 hover:underline mb-8 block"
                         >
-                          Quer deixar uma mensagem especial para os noivos?
+                          Deixe uma mensagem especial para os noivos, clique
+                          aqui!
                         </a>
                         <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4">
                           <button
