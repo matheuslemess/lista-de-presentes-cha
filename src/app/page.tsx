@@ -89,7 +89,7 @@ export default function HomePage() {
               Nosso Chá de Panela
             </h1>
             <p className="font-dancing text-5xl sm:text-7xl text-rose-800 my-4">
-              Thainá & Noivo
+              Thaynara & Gabriel
             </p>
             <div className="flex justify-center items-center gap-4 text-rose-400">
               <div className="flex-1 h-px bg-rose-200"></div>
